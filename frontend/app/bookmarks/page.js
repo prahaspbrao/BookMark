@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import { authFetch } from "@/lib/authFetch";
 
 const API_URL = "http://localhost:5000/api/bookmarks";
 
@@ -21,7 +22,7 @@ export default function BookmarksPage() {
     let url = `${API_URL}?q=${search}`;
     if (tagFilter) url += `&tags=${tagFilter}`;
 
-    const res = await fetch(url);
+    const res = await authFetch(url);
     const data = await res.json();
     setBookmarks(data);
   };
@@ -43,16 +44,14 @@ export default function BookmarksPage() {
 
     if (editId) {
       // UPDATE
-      await fetch(`${API_URL}/${editId}`, {
+      await authFetch(`${API_URL}/${editId}`, {
         method: "PUT",
-        headers: { "Content-Type": "application/json" },
         body: JSON.stringify(payload),
       });
     } else {
       // CREATE
-      await fetch(API_URL, {
+      await authFetch(API_URL, {
         method: "POST",
-        headers: { "Content-Type": "application/json" },
         body: JSON.stringify(payload),
       });
     }
@@ -78,16 +77,17 @@ export default function BookmarksPage() {
   };
 
   const deleteBookmark = async (id) => {
-    await fetch(`${API_URL}/${id}`, { method: "DELETE" });
-    fetchBookmarks();
+    await authFetch(`${API_URL}/${id}`, {
+      method: "DELETE",
+    });
   };
 
   const toggleFavorite = async (bookmark) => {
-    await fetch(`${API_URL}/${bookmark._id}`, {
+    await authFetch(`${API_URL}/${bookmark._id}`, {
       method: "PUT",
-      headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ favorite: !bookmark.favorite }),
     });
+
     fetchBookmarks();
   };
 

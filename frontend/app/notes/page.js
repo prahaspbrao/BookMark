@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import { authFetch } from "@/lib/authFetch";
 
 const API_URL = "http://localhost:5000/api/notes";
 
@@ -20,7 +21,7 @@ export default function NotesPage() {
     let url = `${API_URL}?q=${search}`;
     if (tagFilter) url += `&tags=${tagFilter}`;
 
-    const res = await fetch(url);
+    const res = await authFetch(url);
     const data = await res.json();
     setNotes(data);
   };
@@ -41,16 +42,14 @@ export default function NotesPage() {
 
     if (editId) {
       // UPDATE
-      await fetch(`${API_URL}/${editId}`, {
+      await authFetch(`${API_URL}/${editId}`, {
         method: "PUT",
-        headers: { "Content-Type": "application/json" },
         body: JSON.stringify(payload),
       });
     } else {
       // CREATE
-      await fetch(API_URL, {
+      await authFetch(API_URL, {
         method: "POST",
-        headers: { "Content-Type": "application/json" },
         body: JSON.stringify(payload),
       });
     }
@@ -74,16 +73,15 @@ export default function NotesPage() {
   };
 
   const deleteNote = async (id) => {
-    await fetch(`${API_URL}/${id}`, { method: "DELETE" });
-    fetchNotes();
+    await authFetch(`${API_URL}/${id}`, { method: "DELETE" });
   };
 
   const toggleFavorite = async (note) => {
-    await fetch(`${API_URL}/${note._id}`, {
+    await authFetch(`${API_URL}/${note._id}`, {
       method: "PUT",
-      headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ favorite: !note.favorite }),
     });
+
     fetchNotes();
   };
 
