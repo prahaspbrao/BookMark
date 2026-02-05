@@ -3,7 +3,10 @@ const Note = require("../models/Note");
 // CREATE NOTE
 exports.createNote = async (req, res) => {
   try {
-    const note = await Note.create(req.body);
+    const note = await Note.create({
+      ...req.body,
+      user: req.user,
+    });
     res.status(201).json(note);
   } catch (error) {
     res.status(400).json({ message: error.message });
@@ -15,7 +18,7 @@ exports.getNotes = async (req, res) => {
   try {
     const { q, tags } = req.query;
 
-    let filter = {};
+    let filter = { user: req.user };
 
     if (q) {
       filter.$or = [
@@ -51,14 +54,18 @@ exports.getNoteById = async (req, res) => {
 // UPDATE NOTE
 exports.updateNote = async (req, res) => {
   try {
-    const note = await Note.findByIdAndUpdate(
-      req.params.id,
+    const note = await Note.findOneAndUpdate(
+      { _id: req.params.id, user: req.user },
       req.body,
-      { new: true }
+      { new: true },
     );
+
     if (!note) {
-      return res.status(404).json({ message: "Note not found" });
+      return res
+        .status(404)
+        .json({ message: "Note not found or unauthorized" });
     }
+
     res.json(note);
   } catch (error) {
     res.status(400).json({ message: error.message });
@@ -68,10 +75,17 @@ exports.updateNote = async (req, res) => {
 // DELETE NOTE
 exports.deleteNote = async (req, res) => {
   try {
-    const note = await Note.findByIdAndDelete(req.params.id);
+    const note = await Note.findOneAndDelete({
+      _id: req.params.id,
+      user: req.user,
+    });
+
     if (!note) {
-      return res.status(404).json({ message: "Note not found" });
+      return res
+        .status(404)
+        .json({ message: "Note not found or unauthorized" });
     }
+
     res.json({ message: "Note deleted successfully" });
   } catch (error) {
     res.status(400).json({ message: "Invalid ID" });

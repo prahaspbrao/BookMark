@@ -2,10 +2,16 @@ const Bookmark = require("../models/Bookmark");
 const fetchTitle = require("../utils/fetchTitle");
 const { isValidUrl } = require("../utils/isValidUrl");
 
+// =======================
 // CREATE BOOKMARK
+// =======================
 exports.createBookmark = async (req, res) => {
   try {
     const { title, url } = req.body;
+
+    if (!url) {
+      return res.status(400).json({ message: "URL is required" });
+    }
 
     if (!isValidUrl(url)) {
       return res.status(400).json({ message: "Invalid URL" });
@@ -19,6 +25,7 @@ exports.createBookmark = async (req, res) => {
     const bookmark = await Bookmark.create({
       ...req.body,
       title: finalTitle,
+      user: req.user, // 👈 important
     });
 
     res.status(201).json(bookmark);
@@ -27,11 +34,14 @@ exports.createBookmark = async (req, res) => {
   }
 };
 
-// GET ALL BOOKMARKS (search + tags)
+// =======================
+// GET ALL BOOKMARKS (user-specific + search + tags)
+// =======================
 exports.getBookmarks = async (req, res) => {
   try {
     const { q, tags } = req.query;
-    let filter = {};
+
+    let filter = { user: req.user }; // 👈 user isolation
 
     if (q) {
       filter.$or = [
@@ -51,45 +61,67 @@ exports.getBookmarks = async (req, res) => {
   }
 };
 
-// GET BOOKMARK BY ID
+// =======================
+// GET BOOKMARK BY ID (ownership check)
+// =======================
 exports.getBookmarkById = async (req, res) => {
   try {
-    const bookmark = await Bookmark.findById(req.params.id);
+    const bookmark = await Bookmark.findOne({
+      _id: req.params.id,
+      user: req.user,
+    });
+
     if (!bookmark) {
       return res.status(404).json({ message: "Bookmark not found" });
     }
+
     res.json(bookmark);
-  } catch {
+  } catch (error) {
     res.status(400).json({ message: "Invalid ID" });
   }
 };
 
-// UPDATE BOOKMARK
+// =======================
+// UPDATE BOOKMARK (ownership check)
+// =======================
 exports.updateBookmark = async (req, res) => {
   try {
-    const bookmark = await Bookmark.findByIdAndUpdate(
-      req.params.id,
+    const bookmark = await Bookmark.findOneAndUpdate(
+      { _id: req.params.id, user: req.user },
       req.body,
       { new: true }
     );
+
     if (!bookmark) {
-      return res.status(404).json({ message: "Bookmark not found" });
+      return res
+        .status(404)
+        .json({ message: "Bookmark not found or unauthorized" });
     }
+
     res.json(bookmark);
   } catch (error) {
     res.status(400).json({ message: error.message });
   }
 };
 
-// DELETE BOOKMARK
+// =======================
+// DELETE BOOKMARK (ownership check)
+// =======================
 exports.deleteBookmark = async (req, res) => {
   try {
-    const bookmark = await Bookmark.findByIdAndDelete(req.params.id);
+    const bookmark = await Bookmark.findOneAndDelete({
+      _id: req.params.id,
+      user: req.user,
+    });
+
     if (!bookmark) {
-      return res.status(404).json({ message: "Bookmark not found" });
+      return res
+        .status(404)
+        .json({ message: "Bookmark not found or unauthorized" });
     }
+
     res.json({ message: "Bookmark deleted successfully" });
-  } catch {
+  } catch (error) {
     res.status(400).json({ message: "Invalid ID" });
   }
 };
