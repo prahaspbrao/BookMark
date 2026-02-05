@@ -2,11 +2,13 @@
 
 import { useEffect, useState } from "react";
 import { authFetch } from "@/lib/authFetch";
+import { useRouter } from "next/navigation";
 
 const API_URL = "http://localhost:5000/api/notes";
 
 export default function NotesPage() {
   const [notes, setNotes] = useState([]);
+  const router = useRouter();
 
   const [title, setTitle] = useState("");
   const [content, setContent] = useState("");
@@ -18,15 +20,33 @@ export default function NotesPage() {
   const [editId, setEditId] = useState(null);
 
   const fetchNotes = async () => {
-    let url = `${API_URL}?q=${search}`;
-    if (tagFilter) url += `&tags=${tagFilter}`;
+    try {
+      let url = `${API_URL}?q=${search}`;
+      if (tagFilter) url += `&tags=${tagFilter}`;
 
-    const res = await authFetch(url);
-    const data = await res.json();
-    setNotes(data);
+      const res = await authFetch(url);
+
+      if (!res.ok) {
+        setNotes([]);
+        return;
+      }
+
+      const data = await res.json();
+
+      // ✅ always ensure array
+      setNotes(Array.isArray(data) ? data : []);
+    } catch (error) {
+      console.error("Error fetching notes:", error);
+      setNotes([]);
+    }
   };
 
   useEffect(() => {
+    const token = localStorage.getItem("token");
+    if (!token) {
+      router.push("/login");
+      return;
+    }
     fetchNotes();
   }, [search, tagFilter]);
 
@@ -74,6 +94,7 @@ export default function NotesPage() {
 
   const deleteNote = async (id) => {
     await authFetch(`${API_URL}/${id}`, { method: "DELETE" });
+    fetchNotes();
   };
 
   const toggleFavorite = async (note) => {
@@ -154,46 +175,50 @@ export default function NotesPage() {
 
       {/* Notes List */}
       <div className="grid gap-4">
-        {notes.map((note) => (
-          <div key={note._id} className="bg-white p-4 rounded shadow">
-            <h2 className="font-semibold">{note.title}</h2>
-            <p className="text-sm text-gray-600">{note.content}</p>
+        {Array.isArray(notes) &&
+          notes.map((note) => (
+            <div key={note._id} className="bg-white p-4 rounded shadow">
+              <h2 className="font-semibold">{note.title}</h2>
+              <p className="text-sm text-gray-600">{note.content}</p>
 
-            <div className="flex gap-2 mt-2 flex-wrap">
-              {note.tags.map((tag, idx) => (
-                <span
-                  key={idx}
-                  className="text-xs bg-gray-200 px-2 py-1 rounded"
+              <div className="flex gap-2 mt-2 flex-wrap">
+                {note.tags.map((tag, idx) => (
+                  <span
+                    key={idx}
+                    className="text-xs bg-gray-200 px-2 py-1 rounded"
+                  >
+                    #{tag}
+                  </span>
+                ))}
+              </div>
+
+              <div className="flex gap-4 mt-3 items-center text-sm">
+                <button
+                  onClick={() => toggleFavorite(note)}
+                  className={`text-lg ${
+                    note.favorite ? "text-yellow-500" : "text-gray-400"
+                  }`}
+                  title="Toggle favorite"
                 >
-                  #{tag}
-                </span>
-              ))}
+                  ★
+                </button>
+
+                <button
+                  onClick={() => startEdit(note)}
+                  className="text-blue-600"
+                >
+                  Edit
+                </button>
+
+                <button
+                  onClick={() => deleteNote(note._id)}
+                  className="text-red-500"
+                >
+                  Delete
+                </button>
+              </div>
             </div>
-
-            <div className="flex gap-4 mt-3 items-center text-sm">
-              <button
-                onClick={() => toggleFavorite(note)}
-                className={`text-lg ${
-                  note.favorite ? "text-yellow-500" : "text-gray-400"
-                }`}
-                title="Toggle favorite"
-              >
-                ★
-              </button>
-
-              <button onClick={() => startEdit(note)} className="text-blue-600">
-                Edit
-              </button>
-
-              <button
-                onClick={() => deleteNote(note._id)}
-                className="text-red-500"
-              >
-                Delete
-              </button>
-            </div>
-          </div>
-        ))}
+          ))}
       </div>
     </div>
   );
