@@ -2,38 +2,46 @@
 
 import Link from "next/link";
 import { useRouter } from "next/navigation";
+import { useEffect, useState } from "react";
+import "./Navbar.css";
 
 export default function Navbar() {
   const router = useRouter();
+  const [isLoggedIn, setIsLoggedIn] = useState(false);
+
+  useEffect(() => {
+    const token = localStorage.getItem("token");
+    setIsLoggedIn(!!token);
+  }, []);
 
   const handleLogout = () => {
     localStorage.removeItem("token");
+    setIsLoggedIn(false);
     router.push("/login");
   };
 
   return (
-    <nav className="bg-white shadow mb-6">
-      <div className="max-w-5xl mx-auto px-4 py-3 flex justify-between items-center">
-        <h1 className="text-lg font-bold text-blue-600">
-          Notes & Bookmarks
-        </h1>
-
-        <div className="flex items-center gap-4">
-          <Link href="/notes" className="text-gray-700 hover:text-blue-600">
-            Notes
-          </Link>
-          <Link href="/bookmarks" className="text-gray-700 hover:text-blue-600">
-            Bookmarks
-          </Link>
-
-          <button
-            onClick={handleLogout}
-            className="bg-red-500 text-white px-3 py-1 rounded text-sm"
-          >
-            Logout
-          </button>
+    <header className="navbar">
+      <div className="navbar-container">
+        {/* Brand */}
+        <div className="navbar-brand">
+          <span>📒</span>
+          <h1>Notes & Bookmarks</h1>
         </div>
+
+        {/* Links */}
+        <nav className="navbar-links">
+          <Link href="/notes">Notes</Link>
+          <Link href="/bookmarks">Bookmarks</Link>
+
+          {/* Logout only if logged in */}
+          {isLoggedIn && (
+            <button onClick={handleLogout} className="logout-btn">
+              Logout
+            </button>
+          )}
+        </nav>
       </div>
-    </nav>
+    </header>
   );
 }

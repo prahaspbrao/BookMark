@@ -1,7 +1,8 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
+import "./page.css";
 
 export default function RegisterPage() {
   const [name, setName] = useState("");
@@ -9,11 +10,13 @@ export default function RegisterPage() {
   const [password, setPassword] = useState("");
   const router = useRouter();
 
-  const token =
-  typeof window !== "undefined"
-    ? localStorage.getItem("token")
-    : null;
-
+  // Redirect if already logged in
+  useEffect(() => {
+    const token = localStorage.getItem("token");
+    if (token) {
+      router.push("/notes");
+    }
+  }, [router]);
 
   const handleRegister = async (e) => {
     e.preventDefault();
@@ -32,35 +35,46 @@ export default function RegisterPage() {
   };
 
   return (
-    <div className="max-w-md mx-auto mt-20 bg-white p-6 rounded shadow">
-      <h1 className="text-xl font-bold mb-4">Register</h1>
+    <div className="register-container">
+      <div className="register-card">
+        <h1 className="register-title">Create your account</h1>
+        <p className="register-subtitle">
+          Start managing your notes and bookmarks securely
+        </p>
 
-      <form onSubmit={handleRegister} className="space-y-3">
-        <input
-          placeholder="Name"
-          className="w-full p-2 border rounded"
-          value={name}
-          onChange={(e) => setName(e.target.value)}
-        />
-        <input
-          placeholder="Email"
-          type="email"
-          className="w-full p-2 border rounded"
-          value={email}
-          onChange={(e) => setEmail(e.target.value)}
-        />
-        <input
-          placeholder="Password"
-          type="password"
-          className="w-full p-2 border rounded"
-          value={password}
-          onChange={(e) => setPassword(e.target.value)}
-        />
+        <form onSubmit={handleRegister} className="register-form">
+          <input
+            type="text"
+            placeholder="Full name"
+            value={name}
+            onChange={(e) => setName(e.target.value)}
+            required
+          />
 
-        <button className="w-full bg-blue-600 text-white py-2 rounded">
-          Register
-        </button>
-      </form>
+          <input
+            type="email"
+            placeholder="Email address"
+            value={email}
+            onChange={(e) => setEmail(e.target.value)}
+            required
+          />
+
+          <input
+            type="password"
+            placeholder="Password"
+            value={password}
+            onChange={(e) => setPassword(e.target.value)}
+            required
+          />
+
+          <button type="submit">Register</button>
+        </form>
+
+        <p className="register-footer">
+          Already have an account?{" "}
+          <span onClick={() => router.push("/login")}>Login</span>
+        </p>
+      </div>
     </div>
   );
 }

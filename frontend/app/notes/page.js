@@ -3,6 +3,7 @@
 import { useEffect, useState } from "react";
 import { authFetch } from "@/lib/authFetch";
 import { useRouter } from "next/navigation";
+import "./page.css";
 
 const API_URL = "http://localhost:5000/api/notes";
 
@@ -16,7 +17,6 @@ export default function NotesPage() {
 
   const [search, setSearch] = useState("");
   const [tagFilter, setTagFilter] = useState("");
-
   const [editId, setEditId] = useState(null);
 
   const fetchNotes = async () => {
@@ -25,18 +25,14 @@ export default function NotesPage() {
       if (tagFilter) url += `&tags=${tagFilter}`;
 
       const res = await authFetch(url);
-
       if (!res.ok) {
         setNotes([]);
         return;
       }
 
       const data = await res.json();
-
-      // ✅ always ensure array
       setNotes(Array.isArray(data) ? data : []);
-    } catch (error) {
-      console.error("Error fetching notes:", error);
+    } catch {
       setNotes([]);
     }
   };
@@ -61,13 +57,11 @@ export default function NotesPage() {
     };
 
     if (editId) {
-      // UPDATE
       await authFetch(`${API_URL}/${editId}`, {
         method: "PUT",
         body: JSON.stringify(payload),
       });
     } else {
-      // CREATE
       await authFetch(API_URL, {
         method: "POST",
         body: JSON.stringify(payload),
@@ -102,117 +96,87 @@ export default function NotesPage() {
       method: "PUT",
       body: JSON.stringify({ favorite: !note.favorite }),
     });
-
     fetchNotes();
   };
 
   return (
-    <div>
-      <h1 className="text-2xl font-bold mb-4">Notes</h1>
+    <div className="notes-page">
+      <div className="page-header">
+        <h1>Notes</h1>
+        <p>Create, edit, and organize your notes</p>
+      </div>
 
-      {/* Search & Filter */}
-      <div className="flex gap-2 mb-4">
+      {/* Toolbar */}
+      <div className="toolbar">
         <input
-          type="text"
           placeholder="Search notes..."
-          className="flex-1 p-2 border rounded"
           value={search}
           onChange={(e) => setSearch(e.target.value)}
         />
         <input
-          type="text"
           placeholder="Filter by tag"
-          className="w-40 p-2 border rounded"
           value={tagFilter}
           onChange={(e) => setTagFilter(e.target.value)}
         />
       </div>
 
-      {/* Create / Edit Form */}
-      <form
-        onSubmit={handleSubmit}
-        className="bg-white p-4 rounded shadow mb-6"
-      >
+      {/* Form */}
+      <form onSubmit={handleSubmit} className="note-form">
         <input
-          type="text"
-          placeholder="Title"
-          className="w-full p-2 mb-2 border rounded"
+          placeholder="Note title"
           value={title}
           onChange={(e) => setTitle(e.target.value)}
         />
 
         <textarea
-          placeholder="Content"
-          className="w-full p-2 mb-2 border rounded"
+          placeholder="Write your note..."
           value={content}
           onChange={(e) => setContent(e.target.value)}
         />
 
         <input
-          type="text"
           placeholder="Tags (comma separated)"
-          className="w-full p-2 mb-2 border rounded"
           value={tags}
           onChange={(e) => setTags(e.target.value)}
         />
 
-        <div className="flex gap-2">
-          <button className="bg-blue-600 text-white px-4 py-2 rounded">
+        <div className="form-actions">
+          <button type="submit">
             {editId ? "Update Note" : "Add Note"}
           </button>
-
           {editId && (
-            <button
-              type="button"
-              onClick={resetForm}
-              className="bg-gray-400 text-white px-4 py-2 rounded"
-            >
+            <button type="button" className="cancel" onClick={resetForm}>
               Cancel
             </button>
           )}
         </div>
       </form>
 
-      {/* Notes List */}
-      <div className="grid gap-4">
+      {/* Notes Grid */}
+      <div className="notes-grid">
         {Array.isArray(notes) &&
           notes.map((note) => (
-            <div key={note._id} className="bg-white p-4 rounded shadow">
-              <h2 className="font-semibold">{note.title}</h2>
-              <p className="text-sm text-gray-600">{note.content}</p>
+            <div className="note-card" key={note._id}>
+              <h2>{note.title}</h2>
+              <p>{note.content}</p>
 
-              <div className="flex gap-2 mt-2 flex-wrap">
+              <div className="tags">
                 {note.tags.map((tag, idx) => (
-                  <span
-                    key={idx}
-                    className="text-xs bg-gray-200 px-2 py-1 rounded"
-                  >
-                    #{tag}
-                  </span>
+                  <span key={idx}>#{tag}</span>
                 ))}
               </div>
 
-              <div className="flex gap-4 mt-3 items-center text-sm">
+              <div className="card-actions">
                 <button
+                  className={`star ${note.favorite ? "active" : ""}`}
                   onClick={() => toggleFavorite(note)}
-                  className={`text-lg ${
-                    note.favorite ? "text-yellow-500" : "text-gray-400"
-                  }`}
-                  title="Toggle favorite"
                 >
                   ★
                 </button>
-
+                <button onClick={() => startEdit(note)}>Edit</button>
                 <button
-                  onClick={() => startEdit(note)}
-                  className="text-blue-600"
-                >
-                  Edit
-                </button>
-
-                <button
+                  className="danger"
                   onClick={() => deleteNote(note._id)}
-                  className="text-red-500"
                 >
                   Delete
                 </button>

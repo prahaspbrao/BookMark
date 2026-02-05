@@ -3,6 +3,7 @@
 import { useEffect, useState } from "react";
 import { authFetch } from "@/lib/authFetch";
 import { useRouter } from "next/navigation";
+import "./page.css";
 
 const API_URL = "http://localhost:5000/api/bookmarks";
 
@@ -17,7 +18,6 @@ export default function BookmarksPage() {
 
   const [search, setSearch] = useState("");
   const [tagFilter, setTagFilter] = useState("");
-
   const [editId, setEditId] = useState(null);
 
   const fetchBookmarks = async () => {
@@ -26,19 +26,14 @@ export default function BookmarksPage() {
       if (tagFilter) url += `&tags=${tagFilter}`;
 
       const res = await authFetch(url);
-
       if (!res.ok) {
-        // token missing / expired / server error
         setBookmarks([]);
         return;
       }
 
       const data = await res.json();
-
-      // ✅ ensure bookmarks is always an array
       setBookmarks(Array.isArray(data) ? data : []);
     } catch (error) {
-      console.error("Error fetching bookmarks:", error);
       setBookmarks([]);
     }
   };
@@ -64,13 +59,11 @@ export default function BookmarksPage() {
     };
 
     if (editId) {
-      // UPDATE
       await authFetch(`${API_URL}/${editId}`, {
         method: "PUT",
         body: JSON.stringify(payload),
       });
     } else {
-      // CREATE
       await authFetch(API_URL, {
         method: "POST",
         body: JSON.stringify(payload),
@@ -98,9 +91,7 @@ export default function BookmarksPage() {
   };
 
   const deleteBookmark = async (id) => {
-    await authFetch(`${API_URL}/${id}`, {
-      method: "DELETE",
-    });
+    await authFetch(`${API_URL}/${id}`, { method: "DELETE" });
     fetchBookmarks();
   };
 
@@ -109,133 +100,94 @@ export default function BookmarksPage() {
       method: "PUT",
       body: JSON.stringify({ favorite: !bookmark.favorite }),
     });
-
     fetchBookmarks();
   };
 
   return (
-    <div>
-      <h1 className="text-2xl font-bold mb-4">Bookmarks</h1>
+    <div className="bookmarks-page">
+      <div className="page-header">
+        <h1>Bookmarks</h1>
+        <p>Save and manage your important links</p>
+      </div>
 
-      {/* Search & Filter */}
-      <div className="flex gap-2 mb-4">
+      {/* Toolbar */}
+      <div className="toolbar">
         <input
-          type="text"
           placeholder="Search bookmarks..."
-          className="flex-1 p-2 border rounded"
           value={search}
           onChange={(e) => setSearch(e.target.value)}
         />
         <input
-          type="text"
           placeholder="Filter by tag"
-          className="w-40 p-2 border rounded"
           value={tagFilter}
           onChange={(e) => setTagFilter(e.target.value)}
         />
       </div>
 
-      {/* Create / Edit Form */}
-      <form
-        onSubmit={handleSubmit}
-        className="bg-white p-4 rounded shadow mb-6"
-      >
+      {/* Form */}
+      <form onSubmit={handleSubmit} className="bookmark-form">
         <input
           type="url"
-          placeholder="URL (required)"
-          className="w-full p-2 mb-2 border rounded"
+          placeholder="Bookmark URL (required)"
           value={url}
           onChange={(e) => setUrl(e.target.value)}
         />
-
         <input
-          type="text"
-          placeholder="Title (optional – auto fetched)"
-          className="w-full p-2 mb-2 border rounded"
+          placeholder="Title (optional)"
           value={title}
           onChange={(e) => setTitle(e.target.value)}
         />
-
         <textarea
           placeholder="Description"
-          className="w-full p-2 mb-2 border rounded"
           value={description}
           onChange={(e) => setDescription(e.target.value)}
         />
-
         <input
-          type="text"
           placeholder="Tags (comma separated)"
-          className="w-full p-2 mb-2 border rounded"
           value={tags}
           onChange={(e) => setTags(e.target.value)}
         />
 
-        <div className="flex gap-2">
-          <button className="bg-green-600 text-white px-4 py-2 rounded">
+        <div className="form-actions">
+          <button type="submit">
             {editId ? "Update Bookmark" : "Add Bookmark"}
           </button>
-
           {editId && (
-            <button
-              type="button"
-              onClick={resetForm}
-              className="bg-gray-400 text-white px-4 py-2 rounded"
-            >
+            <button type="button" className="cancel" onClick={resetForm}>
               Cancel
             </button>
           )}
         </div>
       </form>
 
-      {/* Bookmarks List */}
-      <div className="grid gap-4">
+      {/* List */}
+      <div className="bookmarks-grid">
         {Array.isArray(bookmarks) &&
           bookmarks.map((bookmark) => (
-            <div key={bookmark._id} className="bg-white p-4 rounded shadow">
-              <a
-                href={bookmark.url}
-                target="_blank"
-                className="font-semibold text-blue-600 underline"
-              >
+            <div className="bookmark-card" key={bookmark._id}>
+              <a href={bookmark.url} target="_blank">
                 {bookmark.title}
               </a>
 
-              <p className="text-sm text-gray-600">{bookmark.description}</p>
+              <p>{bookmark.description}</p>
 
-              <div className="flex gap-2 mt-2 flex-wrap">
+              <div className="tags">
                 {bookmark.tags.map((tag, idx) => (
-                  <span
-                    key={idx}
-                    className="text-xs bg-gray-200 px-2 py-1 rounded"
-                  >
-                    #{tag}
-                  </span>
+                  <span key={idx}>#{tag}</span>
                 ))}
               </div>
 
-              <div className="flex gap-4 mt-3 items-center text-sm">
+              <div className="card-actions">
                 <button
-                  onClick={() => toggleFavorite(bookmark)}
-                  className={`text-lg ${
-                    bookmark.favorite ? "text-yellow-500" : "text-gray-400"
+                  className={`star ${
+                    bookmark.favorite ? "active" : ""
                   }`}
-                  title="Toggle favorite"
+                  onClick={() => toggleFavorite(bookmark)}
                 >
                   ★
                 </button>
-
-                <button
-                  onClick={() => startEdit(bookmark)}
-                  className="text-blue-600"
-                >
-                  Edit
-                </button>
-
-                <button
-                  onClick={() => deleteBookmark(bookmark._id)}
-                  className="text-red-500"
-                >
+                <button onClick={() => startEdit(bookmark)}>Edit</button>
+                <button className="danger" onClick={() => deleteBookmark(bookmark._id)}>
                   Delete
                 </button>
               </div>

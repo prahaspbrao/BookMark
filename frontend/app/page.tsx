@@ -3,6 +3,7 @@
 import { useEffect } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
+import "./page.css";
 
 export default function HomePage() {
   const router = useRouter();
@@ -12,34 +13,47 @@ export default function HomePage() {
     if (token) {
       router.push("/notes");
     }
-  }, []);
+  }, [router]);
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-gray-100">
-      <div className="bg-white p-8 rounded shadow max-w-md w-full text-center">
-        <h1 className="text-2xl font-bold mb-4">
-          📒 Notes & 🔖 Bookmarks Manager
-        </h1>
+    <div className="home-container">
+      <div className="home-card">
+        {/* LEFT SECTION */}
+        <div className="home-left">
+          <h1 className="home-title">
+            Organize your <span>notes</span> and <span>bookmarks</span>
+          </h1>
 
-        <p className="text-gray-600 mb-6">
-          Manage your personal notes and bookmarks securely with tags,
-          favorites, and search.
-        </p>
+          <p className="home-description">
+            A secure personal workspace to save notes, manage bookmarks,
+            filter by tags, mark favorites, and access everything from anywhere.
+          </p>
 
-        <div className="flex gap-4 justify-center">
-          <Link
-            href="/login"
-            className="bg-green-600 text-white px-4 py-2 rounded"
-          >
-            Login
-          </Link>
+          <div className="home-actions">
+            <Link href="/login" className="btn primary">
+              Login
+            </Link>
 
-          <Link
-            href="/register"
-            className="bg-blue-600 text-white px-4 py-2 rounded"
-          >
-            Register
-          </Link>
+            <Link href="/register" className="btn secondary">
+              Create Account
+            </Link>
+          </div>
+
+          <p className="home-footer">
+            Built with Next.js, JWT Authentication & MongoDB
+          </p>
+        </div>
+
+        {/* RIGHT SECTION */}
+        <div className="home-right">
+          <h2>Why use this app?</h2>
+          <ul>
+            <li>✔ Secure login with JWT</li>
+            <li>✔ Notes & bookmarks per user</li>
+            <li>✔ Tag-based filtering & search</li>
+            <li>✔ Favorites for quick access</li>
+            <li>✔ Clean & responsive UI</li>
+          </ul>
         </div>
       </div>
     </div>

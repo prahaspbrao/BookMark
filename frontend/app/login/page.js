@@ -1,18 +1,21 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
+import "./page.css";
 
 export default function LoginPage() {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const router = useRouter();
 
-  const token =
-  typeof window !== "undefined"
-    ? localStorage.getItem("token")
-    : null;
-
+  // Redirect if already logged in
+  useEffect(() => {
+    const token = localStorage.getItem("token");
+    if (token) {
+      router.push("/notes");
+    }
+  }, [router]);
 
   const handleLogin = async (e) => {
     e.preventDefault();
@@ -29,34 +32,45 @@ export default function LoginPage() {
       localStorage.setItem("token", data.token);
       router.push("/notes");
     } else {
-      alert("Invalid credentials");
+      alert("Invalid email or password");
     }
   };
 
   return (
-    <div className="max-w-md mx-auto mt-20 bg-white p-6 rounded shadow">
-      <h1 className="text-xl font-bold mb-4">Login</h1>
+    <div className="login-container">
+      <div className="login-card">
+        <h1 className="login-title">Welcome back</h1>
+        <p className="login-subtitle">
+          Login to access your notes and bookmarks
+        </p>
 
-      <form onSubmit={handleLogin} className="space-y-3">
-        <input
-          placeholder="Email"
-          type="email"
-          className="w-full p-2 border rounded"
-          value={email}
-          onChange={(e) => setEmail(e.target.value)}
-        />
-        <input
-          placeholder="Password"
-          type="password"
-          className="w-full p-2 border rounded"
-          value={password}
-          onChange={(e) => setPassword(e.target.value)}
-        />
+        <form onSubmit={handleLogin} className="login-form">
+          <input
+            type="email"
+            placeholder="Email address"
+            value={email}
+            onChange={(e) => setEmail(e.target.value)}
+            required
+          />
 
-        <button className="w-full bg-green-600 text-white py-2 rounded">
-          Login
-        </button>
-      </form>
+          <input
+            type="password"
+            placeholder="Password"
+            value={password}
+            onChange={(e) => setPassword(e.target.value)}
+            required
+          />
+
+          <button type="submit">Login</button>
+        </form>
+
+        <p className="login-footer">
+          Don’t have an account?{" "}
+          <span onClick={() => router.push("/register")}>
+            Create one
+          </span>
+        </p>
+      </div>
     </div>
   );
 }
