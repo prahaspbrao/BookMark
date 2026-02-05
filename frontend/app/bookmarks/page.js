@@ -82,6 +82,15 @@ export default function BookmarksPage() {
     fetchBookmarks();
   };
 
+  const toggleFavorite = async (bookmark) => {
+    await fetch(`${API_URL}/${bookmark._id}`, {
+      method: "PUT",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ favorite: !bookmark.favorite }),
+    });
+    fetchBookmarks();
+  };
+
   return (
     <div>
       <h1 className="text-2xl font-bold mb-4">Bookmarks</h1>
@@ -105,7 +114,10 @@ export default function BookmarksPage() {
       </div>
 
       {/* Create / Edit Form */}
-      <form onSubmit={handleSubmit} className="bg-white p-4 rounded shadow mb-6">
+      <form
+        onSubmit={handleSubmit}
+        className="bg-white p-4 rounded shadow mb-6"
+      >
         <input
           type="url"
           placeholder="URL (required)"
@@ -179,13 +191,24 @@ export default function BookmarksPage() {
               ))}
             </div>
 
-            <div className="flex gap-3 mt-3 text-sm">
+            <div className="flex gap-4 mt-3 items-center text-sm">
+              <button
+                onClick={() => toggleFavorite(bookmark)}
+                className={`text-lg ${
+                  bookmark.favorite ? "text-yellow-500" : "text-gray-400"
+                }`}
+                title="Toggle favorite"
+              >
+                ★
+              </button>
+
               <button
                 onClick={() => startEdit(bookmark)}
                 className="text-blue-600"
               >
                 Edit
               </button>
+
               <button
                 onClick={() => deleteBookmark(bookmark._id)}
                 className="text-red-500"
