@@ -1,6 +1,9 @@
 const express = require("express");
 const router = express.Router();
 const bookmarkController = require("../controllers/bookmark.controller");
+const protect = require("../middleware/auth.middleware");
+
+router.use(protect);
 
 router.post("/", bookmarkController.createBookmark);
 router.get("/", bookmarkController.getBookmarks);

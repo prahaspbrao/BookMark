@@ -1,6 +1,9 @@
 const express = require("express");
 const router = express.Router();
 const noteController = require("../controllers/note.controller");
+const protect = require("../middleware/auth.middleware");
+
+router.use(protect);
 
 router.post("/", noteController.createNote);
 router.get("/", noteController.getNotes);
