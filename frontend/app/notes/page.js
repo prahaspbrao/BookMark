@@ -78,6 +78,15 @@ export default function NotesPage() {
     fetchNotes();
   };
 
+  const toggleFavorite = async (note) => {
+    await fetch(`${API_URL}/${note._id}`, {
+      method: "PUT",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ favorite: !note.favorite }),
+    });
+    fetchNotes();
+  };
+
   return (
     <div>
       <h1 className="text-2xl font-bold mb-4">Notes</h1>
@@ -101,7 +110,10 @@ export default function NotesPage() {
       </div>
 
       {/* Create / Edit Form */}
-      <form onSubmit={handleSubmit} className="bg-white p-4 rounded shadow mb-6">
+      <form
+        onSubmit={handleSubmit}
+        className="bg-white p-4 rounded shadow mb-6"
+      >
         <input
           type="text"
           placeholder="Title"
@@ -160,13 +172,21 @@ export default function NotesPage() {
               ))}
             </div>
 
-            <div className="flex gap-3 mt-3 text-sm">
+            <div className="flex gap-4 mt-3 items-center text-sm">
               <button
-                onClick={() => startEdit(note)}
-                className="text-blue-600"
+                onClick={() => toggleFavorite(note)}
+                className={`text-lg ${
+                  note.favorite ? "text-yellow-500" : "text-gray-400"
+                }`}
+                title="Toggle favorite"
               >
+                ★
+              </button>
+
+              <button onClick={() => startEdit(note)} className="text-blue-600">
                 Edit
               </button>
+
               <button
                 onClick={() => deleteNote(note._id)}
                 className="text-red-500"
